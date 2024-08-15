@@ -60,7 +60,9 @@ There is another useful option in Flye, which is `asm-coverage`, where you can i
 
 Flye produces as ouptut multiple files, such as the final assembly (assembly.fasta) and the assembly graphs. The assembly graphs are indicators of how good the assembly was done, and if it went accordingly. The graphs can be visualized using Bandage, a software tool. If we are assembling an isolate, ideally we would like to see one big circular fragment, the chromosome, with some smaller circular or linear fragments (plasmids)
 
-![Successful assembly with one circular chromosome and one plasmid]("Images/Assembly_graph_good.png")
+![Successful assembly with one circular chromosome and one plasmid](Images/Assembly_graph_good.png)
+
+![Failed assembly, since no circular chromosome has been found, only multiple contigs](Images/Assembly_graph_bad.png)
  
  ## Step 3: Circularize the assembly
 
