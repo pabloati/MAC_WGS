@@ -126,7 +126,7 @@ We will use `Flye`, a *de novo* assembler for long reads. It is designed for a w
 flye --nano-raw results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     -t 8 \
     -o results/bsubtilis/assembly \
-    --genome-size 430000
+    --genome-size 4300000
 ```
 
 There is another useful option in `Flye`, which is `asm-coverage`, where you can indicate the desired covereage you want in your assembly and it will automatically subset your input to meet the requirement. This might be useful in cases where there is too much information (over 100x), which will slow down the process and might lead `Flye` to produce errors.
@@ -206,6 +206,33 @@ There are many ways in which the quality of an assembly can be determined. We ca
 6. Completness of genes: If the origin of the isolate is known, it can be compared with the genes of the reference to determine the percentage of missing genes. If no reference is available, tools like CheckM2 search for a number of known core single-copy bacterial genes to assess the quality of the assembly.
 7. Contamination: Tools like CheckM can assess if an isolate has been contaminated with other genomes
 
+A fair approach is to use [BUSCO](https://busco.ezlab.org/) in ordert to assess the quality of an assembly. BUSCO will look for a set of genes, after autodetecting the lineage of the assembly (it can be manually given) and determine the percentage of complete, duplicated, missing or broken genes. 
+
+In order to find out if our lineage is present, you can run the following command: `busco --list-datasets`. This will output a list of the different lineage datasets that are inside of `BUSCO`'s database. In our case, we will select 'bacillales_odb10'.
+
+```bash
+busco -i results/bsubtilis/final_assembly.fasta -m genome -l bacillales_odb10 -o results/bsubtilis/busco
+```
+
+`BUSCO` will produce a long log accompanied by multiple files, with a quantitative assessment of the completeness of the assembly. The main focus is on gene content, divided in multiple categories based onthe gene count. Further information can be found in their [manual](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results). In our case, this are results:
+
+        --------------------------------------------------
+        |Results from dataset bacillales_odb10            |
+        --------------------------------------------------
+        |C:99.3%[S:99.1%,D:0.2%],F:0.7%,M:0.0%,n:450      |
+        |447    Complete BUSCOs (C)                       |
+        |446    Complete and single-copy BUSCOs (S)       |
+        |1      Complete and duplicated BUSCOs (D)        |
+        |3      Fragmented BUSCOs (F)                     |
+        |0      Missing BUSCOs (M)                        |
+        |450    Total BUSCO groups searched               |
+        --------------------------------------------------
+
+This looks overall like  a great assembly, with only 0.7% of the searched genes found to be fragmented. Now, you are ready to get your hands dirty! :)
+ ## Excercise
+
+ Following and using all the information you have up intil now, try to assembly the _Escherichia coli_ C-1 genome using only the long reads given. Go step by step and decide on the previously discussed parameters. At every milestone, look at the output files and decide if it is worth continuing or something has gone wrong.
+ 
  ## Step Extra: Hybrid assembly
 
  Nanopore technologies have great strength when it comes to resolving repeats and structural variants due to their long size. However, they come with the caveat of a reduced accuarcy when compared with short reads. This can be compensated by a high throughput, that will correct most of the errors. 
