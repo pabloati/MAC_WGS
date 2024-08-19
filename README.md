@@ -46,7 +46,7 @@ The first step, even before processing any data is to prepare the working enviro
 ```bash
 mkdir scripts
 mkdir data
-mkdir results
+mkdir -p results/bsubtilis
 ```
 
 The data that we will use in this tutorial is publicly available in NCBI and in [Zenodo](https://zenodo.org/records/940733).
@@ -60,7 +60,7 @@ For the first part of the turotial, we will perform a long-reads only assembly a
 The first step in any pipeline that works with sequencing data is to ensure the correct quality of the dataset. For that, we will use a tool like `NanoPlot` to check for different parameters, such as read quality and length, as well as read number. 
 
 ````bash
-NanoPlot --fastq data/bsubtilis_long_reads.fastq -o results/qc
+NanoPlot --fastq data/bsubtilis/bsubtilis_long_reads.fastq -o results/bsubtilis/qc
 ````
 
 NanoQC produces multiple input files, wich showcase the different aspects of the sequencing run. One of the most importants is the graph of length vs quality of the reads:
@@ -77,9 +77,10 @@ To achieve this, we use `NanoFilt` to filter the reads. However, `NanoFilt` requ
 
 ```bash
 # Create target directory
-mkdir -p results/filtered
+mkdir -p results/bsubtilis/filtered
 # Run the filtering
-NanoFilt -l 1000 -q 10 data/bsubtilis_long_reads.fastq > results/filtered/bsubtilis_long_reads_filtered.fastq
+NanoFilt -l 1000 -q 10 data/bsubtilis/bsubtilis_long_reads.fastq > results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq
+
 ```
 
  ## Step 2: Assemble the reads
@@ -87,8 +88,9 @@ NanoFilt -l 1000 -q 10 data/bsubtilis_long_reads.fastq > results/filtered/bsubti
 We will use `Flye`, a *de novo* assembler for long reads. It is designed for a wide range of datasets, and it has several parameters that will have to specify to obtain the most optimal assembly. First of all, we have to indicate the type of input we are using, `nano-raw` in our case, since we have regular uncorrected nanopore reads. Also, it is important to specify genome size, so `Flye` know's what to expect and can estimate the correct depth of sequencing and act accordingly.
 
 ```bash 
-flye --nano-raw results/filtered/bsubtilis_long_reads_filtered.fastq \
-    -o results/bsubtilis_assembly \
+flye --nano-raw results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    -t 8 \
+    -o results/bsubtilis/assembly \
     --genome-size 430000
 ```
 
@@ -119,17 +121,18 @@ There is another useful option in `Flye`, which is `asm-coverage`, where you can
 To do the mapping we will use `minimap2`:
 
 ```bash
-minimap2 -x map-ont results/bsubtilis_assembly/assembly.fasta \
-    results/filtered/bsubtilis_long_reads_filtered.fastq \
-    -t 20 > results/bsubtilis_assembly/bsubtilis.paf
+minimap2 -x map-ont results/bsubtilis/assembly/assembly.fasta \
+    results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    -t 8 > results/bsubtilis/assembly/bsubtilis_mapped.paf
 ```
 
 Once the reads are mapped against the assembly `Racon` can begin the polishing. Take into account that the input files have to be given in a specific order, given in the list above.
 
 ```bash
-racon -t 20 results/filtered/bsubtilis_long_reads_filtered.fastq \ 
-    results/bsubtilis_assembly/bsubtilis.paf \
-    results/bsubtilis_assembly/assembly.fasta > results/polished/bsubtilis_racon.fasta
+mkdir -p results/bsubtilis/polished
+racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    results/bsubtilis/assembly/bsubtilis_mapped.paf \
+    results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
 ```
 
  ## Step 4: Circularize the assembly
@@ -137,9 +140,10 @@ racon -t 20 results/filtered/bsubtilis_long_reads_filtered.fastq \
 Once the assembly is done and polished, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positons!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
 
 ```bash
-dnaapler all -i results/bsubtilis_assembly/assembly.fasta \
-    -o results/bsubtilis_circularization \
-    -t 15
+dnaapler all -i results/bsubtilis/polished/bsubtilis_racon.fasta \
+    -o results/bsubtilis/circularization \
+    -t 8
+cp results/bsubtilis/circularization/dnaapler_reoriented.fasta results/bsubtilis/final_assembly.fasta
 ```
 
 ## Step 5: Annotate the assembly
@@ -147,10 +151,11 @@ dnaapler all -i results/bsubtilis_assembly/assembly.fasta \
 The final step in this pipeline is the annotation. This process consists of two disticnt phases: calling the Open Reading Frames (ORFs) and then assigning a function to them. An ORF is found by determine regions in the genome that begin with an start codon and are closed with a stop codon. Each of this sequences will be putative proteins, which are compared against a gene database to assign known fucntions to each one of them. Depending on the database used, we will recover some genes and miss others, so it is a good practice to try and run our annotation on a more specific database if we are looking for a specific function (such as a CAZy database or ncRNA).
 
 ```bash
-prokka --outdir results/annotation \
-    --prefix brk09 \
-    --genus Bacillus results/ \
-    bsubtilis_circularization/assembly_circularized.fasta
+prokka --outdir results/bsubtilis/annotation \
+    --prefix bsubtilis \
+    --genus Bacillus \
+    --cpus 8 \
+    results/bsubtilis/final_assembly.fasta
 ```
 
  ## Final Step: Quality assesment
@@ -180,7 +185,7 @@ There are many ways in which the quality of an assembly can be determined. We ca
   <em>Figure 4: Unicycler hybrid assembly approach.</em>
 </p>
 
-With all of this in mind, `Unicycler` is a comfortable and user friendly tool to implement. For this example we will use the ecoli dataset, since it contains both short accurate Illumina reads and long ONT reads.
+With all of this in mind, `Unicycler` is a comfortable and user friendly tool to implement. For this example we will use the *E.coli* dataset, since it contains both short accurate Illumina reads and long ONT reads.
 
 ````bash
 unicycler -l data/ecoli/minion_2d.fq \
