@@ -3,17 +3,20 @@
 This tutorial will guide you through the process of filtering, assembling, circularizing, and annotating nanopore sequencing data using various bioinformatics tools. The tools used in this tutorial are:
 
 - **NanoPlot** to produce quality plots and reports of the raw reads.
-- **NanoFilt** for filtering low-quality and short reads.
-- **Flye** for de novo assembly of long reads.
-- **DNAapler** for reorienting the circularized assembly.
-- **Prokka** for annotating the assembled genome.
+- **NanoFilt** to filter low-quality and short reads.
+- **Flye** for the _de novo_ assembly of long reads.
+- **Racon** to polish the  initial assembly.
+- **DNAapler** to reorient the circularized assembly.
+- **Prokka** to annotate the assembled genome.
+- **Unicycler** allows to do a hybrid assembly based on short accurate reads.
 
 ## Prerequisites
 
 Before starting, ensure that you are able to access the ERDA workgroup and follow the next steps to install all the tools that we will use:
 
 1. Access ERDA workgroup [link](https://sid.erda.dk/cgi-sid/ls.py?share_id=ePr2eWTdSX).
-2. Download from the ERDA workgroup the raw *Bacillus subtilis* and *Echerichia coli* sequencing data.
+
+2. Download from the ERDA workgroup the raw *Bacillus subtilis* and *Echerichia coli* C-1 sequencing data.
    
 3. Download from the ERDA workgroup the file course.yaml
 
@@ -34,6 +37,7 @@ The first step, even before processing any data is to prepare the working enviro
 mkdir scripts
 mkdir data
 mkdir -p results/bsubtilis
+mkdir -p results/ecoli
 ```
 Now, with the main directories created, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial:
 
@@ -41,11 +45,20 @@ Now, with the main directories created, lets download the data. It has all been 
 mkdir data/bsubtilis
 cd data/bsubtilis
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/bsubtilis/bsubtilis_long_reads.fastq
-cd ..
+cd ../..
 ```
 
-Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, 
-Moreover, the data that we will use in this tutorial is publicly available in NCBI and in [Zenodo](https://zenodo.org/records/940733).
+Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, with the foward and reverse reads.
+
+```bash
+mkdir data/ecoli
+cd data/ecoli
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_f.fq
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_r.fq
+https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/minion_2d.fq
+cd ../..
+```
+Moreover, the data that we will use in this tutorial is publicly available in [NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR29816488&display=metadata) and in [Zenodo](https://zenodo.org/records/940733),
 
 #### Tools installation
 
@@ -208,6 +221,8 @@ There are many ways in which the quality of an assembly can be determined. We ca
 </p>
 
 With all of this in mind, `Unicycler` is a comfortable and user friendly tool to implement. For this example we will use the *E.coli* dataset, since it contains both short accurate Illumina reads and long ONT reads.
+
+Now, download the data from ERDA to 
 
 ````bash
 unicycler -l data/ecoli/minion_2d.fq \
