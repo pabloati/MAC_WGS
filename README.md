@@ -12,30 +12,17 @@ This tutorial will guide you through the process of filtering, assembling, circu
 
 Before starting, ensure that you are able to access the ERDA workgroup and follow the next steps to install all the tools that we will use:
 
-1. Access ERDA workgroup [link](https://sid.erda.dk/cgi-sid/ls.py?share_id=ePr2eWTdSX)
+1. Access ERDA workgroup [link](https://sid.erda.dk/cgi-sid/ls.py?share_id=ePr2eWTdSX).
+2. Download from the ERDA workgroup the raw *Bacillus subtilis* and *Echerichia coli* sequencing data.
+   
+3. Download from the ERDA workgroup the file course.yaml
 
+4. Install the conda environment: `conda install -f course.yaml`
 
-2. Download from the ERDA workgroup the file course.yaml
-
-3. Install the conda environment: `conda install -f course.yaml`
-
-4. Install SRA toolkit: `sudo apt install sra-toolkit`
-
-5. Install [Unicycler](https://github.com/rrwick/Unicycler?tab=readme-ov-file#installation) and [Racon](https://github.com/lbcb-sci/racon?tab=readme-ov-file#installation)
+5. Install [Unicycler](https://github.com/rrwick/Unicycler?tab=readme-ov-file#installation) and [Racon](https://github.com/lbcb-sci/racon?tab=readme-ov-file#installation).
 
 
 #### Data download
-Additionally, ensure that you have your sequencing data in `.fastq.gz` format. It can either be downloaded from NCBI's SRA archive via `sra-toolkit` or directly from ERDA workgroup. 
-
-  1. `fasterq-dump --split-file ` (COMPLETE WITH FINAL DATASET)
-
-Moreover, an additional dataset will be used to perform a hybrid assembly of Illumina short-reads and Nanopore long-reads. It can be directly downloaded from the internet or through ERDA.
-
-````bash
-wget https://zenodo.org/record/940733/files/illumina_f.fq
-wget https://zenodo.org/record/940733/files/illumina_r.fq
-wget https://zenodo.org/record/940733/files/minion_2d.fq
-````
 
 The first step, even before processing any data is to prepare the working environment. In bioinformatics, an organized workspace is vital, so when you come after some time to your project, you can find and understand whant you were doing, rather thatn spend hours searching through weirldy named directories. It is inportant to always create three directories:
 
@@ -48,9 +35,44 @@ mkdir scripts
 mkdir data
 mkdir results
 ```
+Now, with the main directories created, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial:
 
-The data that we will use in this tutorial is publicly available in NCBI and in [Zenodo](https://zenodo.org/records/940733).
+```bash
+mkdir data/bsubtilis
+cd data/bsubtilis
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/bsubtilis/bsubtilis_long_reads.fastq
+cd ..
+```
 
+Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, 
+Moreover, the data that we will use in this tutorial is publicly available in NCBI and in [Zenodo](https://zenodo.org/records/940733).
+
+#### Tools installation
+
+Most of the tools can be installed directly using a conda environment. Conda environments are powerful 
+
+```bash
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/course.yaml
+conda env create -f course.yaml
+```
+
+Unicycler and Racon are installed using the commands in their wikis. For their isntallation, I would recommend creating a new directory called programs, so they are more accessible and our main environment does not get full of unnecesary files.
+
+```bash
+mkdir scripts/programs
+cd scripts/programs
+# Install Unicycler
+git clone https://github.com/rrwick/Unicycler.git
+cd Unicycler
+python3 setup.py install # If it fails, run this command with sudo
+cd ..
+
+# Racon install
+git clone https://github.com/lbcb-sci/racon && cd racon && mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release .. && make
+sudo make install
+cd ../../..
+```
 # Long reads only assembly and annotation
 
 For the first part of the turotial, we will perform a long-reads only assembly and annotation, using NCBIs dataset, and the *E.coli* dataset will be used for a hybrid assembly further on.
@@ -60,7 +82,7 @@ For the first part of the turotial, we will perform a long-reads only assembly a
 The first step in any pipeline that works with sequencing data is to ensure the correct quality of the dataset. For that, we will use a tool like `NanoPlot` to check for different parameters, such as read quality and length, as well as read number. 
 
 ````bash
-NanoPlot --fastq data/bsubtilis_long_reads.fastq -o results/qc
+NanoPlot --fastq data/bsubtilits/bsubtilis_long_reads.fastq -o results/qc
 ````
 
 NanoQC produces multiple input files, wich showcase the different aspects of the sequencing run. One of the most importants is the graph of length vs quality of the reads:
