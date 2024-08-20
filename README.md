@@ -25,8 +25,7 @@ Before starting, ensure that you are able to access the ERDA workgroup and follo
 5. Install [Unicycler](https://github.com/rrwick/Unicycler?tab=readme-ov-file#installation) and [Racon](https://github.com/lbcb-sci/racon?tab=readme-ov-file#installation).
 
 
-#### Data download
-
+#### Tools installation
 The first step, even before processing any data is to prepare the working environment. In bioinformatics, an organized workspace is vital, so when you come after some time to your project, you can find and understand whant you were doing, rather thatn spend hours searching through weirldy named directories. It is inportant to always create three directories:
 
 - scripts: all the scripts will be stored here, with meaningful names
@@ -39,28 +38,6 @@ mkdir data
 mkdir -p results/bsubtilis
 mkdir -p results/ecoli
 ```
-Now, with the main directories created, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial:
-
-```bash
-mkdir data/bsubtilis
-cd data/bsubtilis
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/bsubtilis/bsubtilis_long_reads.fastq
-cd ../..
-```
-
-Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, with the foward and reverse reads.
-
-```bash
-mkdir data/ecoli
-cd data/ecoli
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_f.fq
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_r.fq
-https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/minion_2d.fq
-cd ../..
-```
-Moreover, the data that we will use in this tutorial is publicly available in [NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR29816488&display=metadata) and in [Zenodo](https://zenodo.org/records/940733),
-
-#### Tools installation
 
 Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use mamba, which is a version of conda more powerful when multiple software has too be installed. 
 
@@ -86,13 +63,39 @@ cmake -DCMAKE_BUILD_TYPE=Release .. && make
 sudo make install
 cd ../../..
 ```
+
+The final tool that you should install is called [Bandage](https://github.com/rrwick/Bandage), which is a GUI programs that allows the interaction and visualization of the graphs made by most *de novo* assemblers. The easiest way to install and use, in my opinion, would be to install it in your normal machine (Windows or Mac) and visuallize the files directly from there. Do not worry, because these files are not big, so you memory won't magically disappear.
+
+#### Data download
+
+Now, with the main directories created and the tools installed, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial:
+
+```bash
+mkdir data/bsubtilis
+cd data/bsubtilis
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/bsubtilis/bsubtilis_long_reads.fastq
+cd ../..
+```
+
+Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, with the foward and reverse reads.
+
+```bash
+mkdir data/ecoli
+cd data/ecoli
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_f.fq
+wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_r.fq
+https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/minion_2d.fq
+cd ../..
+```
+Moreover, the data that we will use in this tutorial is publicly available in [NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR29816488&display=metadata) and in [Zenodo](https://zenodo.org/records/940733),
+
 # Long reads only assembly and annotation
 
-For the first part of the turotial, we will perform a long-reads only assembly and annotation, using NCBIs dataset, and the *E.coli* dataset will be used for a hybrid assembly further on.
+For the first part of the turotial, we will perform a long-reads only assembly and annotation, using the *Bacillus subtilis* NCBI dataset. The *Escherichia coli* dataset will be used for a hybrid assembly further on.
 
 ## Step 1: Quality control and filtering
 
-The first step in any pipeline that works with sequencing data is to ensure the correct quality of the dataset. For that, we will use a tool like `NanoPlot` to check for different parameters, such as read quality and length, as well as read number. 
+The initial step in any pipeline that works with sequencing data is to ensure the correct quality of the dataset. For that, we will use a tool like `NanoPlot` to check for different parameters, such as read quality and length, as well as read number. 
 
 ````bash
 NanoPlot --fastq data/bsubtilis/bsubtilis_long_reads.fastq -o results/bsubtilis/qc
@@ -108,13 +111,13 @@ NanoQC produces multiple input files, wich showcase the different aspects of the
 
 Once the initial quality has been assessed, filtering out short and low-quality reads is a crucial step in the assembly process. Reads that are under 1,000 base pairs in length can introduce noise, leading to a less accurate assembly. Additionally, reads with a quality score lower than 10 may contain sequencing errors, which can further compromise the accuracy of the assembly.
 
-To achieve this, we use `NanoFilt` to filter the reads. However, `NanoFilt` requires the input file to be in an uncompressed format. Since our sequencing data is in a compressed .fastq.gz file, we first need to unzip the file. We use the gunzip -c command to decompress the file while streaming its content directly to `NanoFilt`. This approach ensures that the original compressed file remains intact, as the -c option tells gunzip to write the output to standard output rather than replacing the original file. `NanoFilt` then processes the uncompressed data, filtering out any reads shorter than 1,000 base pairs or with a quality score below 10, resulting in a cleaner dataset for downstream analysis.
+To achieve this, we use `NanoFilt` to filter the reads. `NanoFilt`  processes the data, filtering out any reads shorter than 1,000 base pairs or with a quality score below 12, resulting in a cleaner dataset for downstream analysis. In this dataset, this would be the optimal filtering. 1000bp is chosen because `Flye` will produce significantly worse contigs if there are reads under that size, and the quality threshold of 12 is to eliminate the tail of reads that have the lowest quality, without having a great impact in the size of the sequencing data.
 
 ```bash
 # Create target directory
 mkdir -p results/bsubtilis/filtered
 # Run the filtering
-NanoFilt -l 1000 -q 10 data/bsubtilis/bsubtilis_long_reads.fastq > results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq
+NanoFilt -l 1000 -q 12 data/bsubtilis/bsubtilis_long_reads.fastq > results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq
 
 ```
 
@@ -131,7 +134,7 @@ flye --nano-raw results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
 
 There is another useful option in `Flye`, which is `asm-coverage`, where you can indicate the desired covereage you want in your assembly and it will automatically subset your input to meet the requirement. This might be useful in cases where there is too much information (over 100x), which will slow down the process and might lead `Flye` to produce errors.
 
-`Flye` produces as ouptut multiple files, such as the final assembly (assembly.fasta) and the assembly graphs. The assembly graphs are indicators of how good the assembly was done, and if it went accordingly. The graphs can be visualized using Bandage, a software tool. If we are assembling an isolate, ideally we would like to see one big circular fragment, the chromosome, with some smaller circular or linear fragments (plasmids)
+`Flye` produces as ouptut multiple files, such as the final assembly (assembly.fasta) and the assembly graphs. The assembly graphs are indicators of how good the assembly was done, and if it went accordingly. The graphs can be visualized using Bandage. If we are assembling an isolate, ideally we would like to see one big circular fragment, the chromosome, with some smaller circular or linear fragments (plasmids)
 
 <p align="center">
   <img src="Images/Assembly_graph_good.png" alt="Alt text" width="500"/>
@@ -142,7 +145,7 @@ There is another useful option in `Flye`, which is `asm-coverage`, where you can
 <p align="center">
   <img src="Images/Assembly_graph_bad.png" alt="Alt text" width="500"/>
   <br>
-  <em>Figure 3: Bad assembly with no circular choromose. there are a lot of non-contiguous contigs, really fragmented. </em>
+  <em>Figure 3: Bad assembly with no circular chromosome. there are a lot of non-contiguous contigs, really fragmented. </em>
 </p>
  
  ## Step 3: Polish the assembly
@@ -170,6 +173,8 @@ racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
 ```
 
+***Disclaimer:*** Some recent papers have found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
+
  ## Step 4: Circularize the assembly
 
 Once the assembly is done and polished, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positons!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
@@ -183,7 +188,7 @@ cp results/bsubtilis/circularization/dnaapler_reoriented.fasta results/bsubtilis
 
 ## Step 5: Annotate the assembly
 
-The final step in this pipeline is the annotation. This process consists of two disticnt phases: calling the Open Reading Frames (ORFs) and then assigning a function to them. An ORF is found by determine regions in the genome that begin with an start codon and are closed with a stop codon. Each of this sequences will be putative proteins, which are compared against a gene database to assign known fucntions to each one of them. Depending on the database used, we will recover some genes and miss others, so it is a good practice to try and run our annotation on a more specific database if we are looking for a specific function (such as a CAZy database or ncRNA).
+The final step in this pipeline is the annotation. This process consists of two disticnt phases: calling the Open Reading Frames (ORFs) and then assigning a function to them. An ORF is found by determine regions in the genome that begin with an start codon and are closed with a stop codon. Each of this sequences will be putative proteins, which are compared against a gene database to assign known functions to each one of them. Depending on the database used, we will recover some genes and miss others, so it is a good practice to try and run our annotation on a more specific database if we are looking for a specific function (such as a CAZy database or ncRNA).
 
 ```bash
 prokka --outdir results/bsubtilis/annotation \
