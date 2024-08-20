@@ -20,7 +20,7 @@ Before starting, ensure that you are able to access the ERDA workgroup and follo
    
 3. Download from the ERDA workgroup the file course.yaml
 
-4. Install the conda environment: `conda install -f course.yaml`
+4. Install the conda environment: `mamba install -f course.yaml`
 
 5. Install [Unicycler](https://github.com/rrwick/Unicycler?tab=readme-ov-file#installation) and [Racon](https://github.com/lbcb-sci/racon?tab=readme-ov-file#installation).
 
@@ -62,11 +62,11 @@ Moreover, the data that we will use in this tutorial is publicly available in [N
 
 #### Tools installation
 
-Most of the tools can be installed directly using a conda environment. Conda environments are powerful 
+Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use mamba, which is a version of conda more powerful when multiple software has too be installed. 
 
 ```bash
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/course.yaml
-conda env create -f course.yaml
+mamba env create -f course.yaml
 ```
 
 Unicycler and Racon are installed using the commands in their wikis. For their isntallation, I would recommend creating a new directory called programs, so they are more accessible and our main environment does not get full of unnecesary files.
