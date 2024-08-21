@@ -147,7 +147,7 @@ There is another useful option in `Flye`, which is `asm-coverage`, where you can
   <br>
   <em>Figure 3: Bad assembly with no circular chromosome. there are a lot of non-contiguous contigs, really fragmented. </em>
 </p>
- 
+
  ## Step 3: Polish the assembly
 
  As it has been mentioned, long reads tend to have more errors during sequencing than short reads. Thus it is highly important to include a polishing step inside of the assembly pipeline, to reduce the number of errors that might be intruduced as sequencing biases. For this goal we use `Racon`, which uses either the original set of long reads or can be combined with short accurate data (what is known as a hybrid assembly and will be discussed further on). `Racon` takes three files as input:
@@ -159,7 +159,7 @@ There is another useful option in `Flye`, which is `asm-coverage`, where you can
 To do the mapping we will use `minimap2`:
 
 ```bash
-minimap2 -x map-ont results/bsubtilis/assembly/assembly.fasta \
+minimap2 -x map-ont results/bsubtilis/circularized.fasta \
     results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     -t 8 > results/bsubtilis/assembly/bsubtilis_mapped.paf
 ```
@@ -175,30 +175,7 @@ racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
 
 ***Disclaimer:*** Some recent papers have found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
 
- ## Step 4: Circularize the assembly
-
-Once the assembly is done and polished, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positons!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
-
-```bash
-dnaapler all -i results/bsubtilis/polished/bsubtilis_racon.fasta \
-    -o results/bsubtilis/circularization \
-    -t 8
-cp results/bsubtilis/circularization/dnaapler_reoriented.fasta results/bsubtilis/final_assembly.fasta
-```
-
-## Step 5: Annotate the assembly
-
-The final step in this pipeline is the annotation. This process consists of two disticnt phases: calling the Open Reading Frames (ORFs) and then assigning a function to them. An ORF is found by determine regions in the genome that begin with an start codon and are closed with a stop codon. Each of this sequences will be putative proteins, which are compared against a gene database to assign known functions to each one of them. Depending on the database used, we will recover some genes and miss others, so it is a good practice to try and run our annotation on a more specific database if we are looking for a specific function (such as a CAZy database or ncRNA).
-
-```bash
-prokka --outdir results/bsubtilis/annotation \
-    --prefix bsubtilis \
-    --genus Bacillus \
-    --cpus 8 \
-    results/bsubtilis/final_assembly.fasta
-```
-
- ## Final Step: Quality assesment
+ ## Step 4: Quality assesment
 
 There are many ways in which the quality of an assembly can be determined. We can focus on the lenght, depth and size of the contigs in the assembly, by looking at several parameters:
 
@@ -216,10 +193,27 @@ A fair approach is to use [BUSCO](https://busco.ezlab.org/) in ordert to assess 
 In order to find out if our lineage is present, you can run the following command: `busco --list-datasets`. This will output a list of the different lineage datasets that are inside of `BUSCO`'s database. In our case, we will select 'bacillales_odb10'.
 
 ```bash
-busco -i results/bsubtilis/final_assembly.fasta -m genome -l bacillales_odb10 -o results/bsubtilis/busco
+busco -i results/bsubtilis/assembly/assembly.fasta -m genome \
+   -l bacillales_odb10 -o results/bsubtilis/busco_flye
+busco -i results/bsubtilis/polished/bsubtilis_racon.fasta -m genome \
+   -l bacillales_odb10 -o results/bsubtilis/busco_polished
 ```
 
-`BUSCO` will produce a long log accompanied by multiple files, with a quantitative assessment of the completeness of the assembly. The main focus is on gene content, divided in multiple categories based onthe gene count. Further information can be found in their [manual](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results). In our case, this are results:
+`BUSCO` will produce a long log accompanied by multiple files, with a quantitative assessment of the completeness of the assembly. The main focus is on gene content, divided in multiple categories based onthe gene count. Further information can be found in their [manual](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results). Lets look at the results of the polished and raw assemblies:
+
+1. Raw assembly:
+        --------------------------------------------------
+        |Results from dataset bacillales_odb10            |
+        --------------------------------------------------
+        |C:99.8%[S:99.6%,D:0.2%],F:0.2%,M:0.0%,n:450      |
+        |449    Complete BUSCOs (C)                       |
+        |448    Complete and single-copy BUSCOs (S)       |
+        |1      Complete and duplicated BUSCOs (D)        |
+        |1      Fragmented BUSCOs (F)                     |
+        |0      Missing BUSCOs (M)                        |
+        |450    Total BUSCO groups searched               |
+        --------------------------------------------------
+2. Polished assembly:
 
         --------------------------------------------------
         |Results from dataset bacillales_odb10            |
@@ -233,7 +227,32 @@ busco -i results/bsubtilis/final_assembly.fasta -m genome -l bacillales_odb10 -o
         |450    Total BUSCO groups searched               |
         --------------------------------------------------
 
-This looks overall like  a great assembly, with only 0.7% of the searched genes found to be fragmented. Now, you are ready to get your hands dirty! :)
+As you can see, the polished assembly is slightly worse 
+
+ ## Step 5: Circularize the assembly
+
+Once the assembly is done and we determined the best pipeline, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positons!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
+
+```bash
+dnaapler all -i results/bsubtilis/assembly/assembly.fasta \
+    -o results/bsubtilis/circularization \
+    -t 8
+# Moving the main assembly to the outter directory
+cp results/bsubtilis/circularization/dnaapler_reoriented.fasta results/bsubtilis/final_assembly.fasta
+```
+
+## Step 6: Annotate the assembly
+
+The final step in this pipeline is the annotation. This process consists of two disticnt phases: calling the Open Reading Frames (ORFs) and then assigning a function to them. An ORF is found by determine regions in the genome that begin with an start codon and are closed with a stop codon. Each of this sequences will be putative proteins, which are compared against a gene database to assign known functions to each one of them. Depending on the database used, we will recover some genes and miss others, so it is a good practice to try and run our annotation on a more specific database if we are looking for a specific function (such as a CAZy database or ncRNA).
+
+```bash
+prokka --outdir results/bsubtilis/annotation \
+    --prefix bsubtilis \
+    --genus Bacillus \
+    --cpus 8 \
+    results/bsubtilis/final_assembly.fasta
+```
+
  ## Excercise
 
  Following and using all the information you have up intil now, try to assembly the _Escherichia coli_ C-1 genome using only the long reads given. Go step by step and decide on the previously discussed parameters. At every milestone, look at the output files and decide if it is worth continuing or something has gone wrong.
