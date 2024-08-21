@@ -83,9 +83,11 @@ Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists
 ```bash
 mkdir data/ecoli
 cd data/ecoli
+
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_f.fq
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_r.fq
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/minion_2d.fq
+
 cd ../..
 ```
 Moreover, the data that we will use in this tutorial is publicly available in [NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR29816488&display=metadata) and in [Zenodo](https://zenodo.org/records/940733),
@@ -119,7 +121,6 @@ To achieve this, we use `NanoFilt` to filter the reads. `NanoFilt`  processes th
 mkdir -p results/bsubtilis/filtered
 # Run the filtering
 NanoFilt -l 1000 -q 12 data/bsubtilis/bsubtilis_long_reads.fastq > results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq
-
 ```
 
  ## Step 2: Assemble the reads
@@ -149,34 +150,7 @@ There is another useful option in `Flye`, which is `asm-coverage`, where you can
   <em>Figure 3: Bad assembly with no circular chromosome. there are a lot of non-contiguous contigs, really fragmented. </em>
 </p>
 
- ## Step 3: Polish the assembly
-
- As it has been mentioned, long reads tend to have more errors during sequencing than short reads. Thus it is highly important to include a polishing step inside of the assembly pipeline, to reduce the number of errors that might be intruduced as sequencing biases. For this goal we use `Racon`, which uses either the original set of long reads or can be combined with short accurate data (what is known as a hybrid assembly and will be discussed further on). `Racon` takes three files as input:
-
- 1. Original or short accurate reads
- 2. Mapped reads against the assembly (PAF format)
- 3. Assembly to be corrected
-
-To do the mapping we will use `minimap2`:
-
-```bash
-minimap2 -x map-ont results/bsubtilis/circularized.fasta \
-    results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
-    -t 8 > results/bsubtilis/assembly/bsubtilis_mapped.paf
-```
-
-Once the reads are mapped against the assembly `Racon` can begin the polishing. Take into account that the input files have to be given in a specific order, given in the list above.
-
-```bash
-mkdir -p results/bsubtilis/polished
-racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
-    results/bsubtilis/assembly/bsubtilis_mapped.paf \
-    results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
-```
-
-***Disclaimer:*** Some recent papers have found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
-
- ## Step 4: Quality assesment
+ ## Step 3: Quality assesment
 
 There are many ways in which the quality of an assembly can be determined. We can focus on the lenght, depth and size of the contigs in the assembly, by looking at several parameters:
 
@@ -196,13 +170,47 @@ In order to find out if our lineage is present, you can run the following comman
 ```bash
 busco -i results/bsubtilis/assembly/assembly.fasta -m genome \
    -l bacillales_odb10 -o results/bsubtilis/busco_flye
+```
+
+`BUSCO` will produce a long log accompanied by multiple files, with a quantitative assessment of the completeness of the assembly. The main focus is on gene content, divided in multiple categories based onthe gene count. Further information can be found in their [manual](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results).
+
+ ## Step 4: Polish the assembly
+
+ As it has been mentioned, long reads tend to have more errors during sequencing than short reads. Thus it is highly important to include a polishing step inside of the assembly pipeline, to reduce the number of errors that might be intruduced as sequencing biases. For this goal we use `Racon`, which uses either the original set of long reads or can be combined with short accurate data (what is known as a hybrid assembly and will be discussed further on). `Racon` takes three files as input:
+
+ 1. Original or short accurate reads
+ 2. Mapped reads against the assembly (PAF format)
+ 3. Assembly to be corrected
+
+To do the mapping we will use `minimap2`:
+
+```bash
+minimap2 -x map-ont results/bsubtilis/circularized.fasta \
+    results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    -t 8 > results/bsubtilis/assembly/bsubtilis_mapped.paf
+```
+
+Once the reads are mapped against the assembly `Racon` can begin the polishing. Take into account that the input files have to be given in a specific order, given in the list above.
+
+```bash
+mkdir -p results/bsubtilis/polished
+
+racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    results/bsubtilis/assembly/bsubtilis_mapped.paf \
+    results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
+```
+
+***Disclaimer:*** Some recent papers have found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
+
+With that in mind, lets run busco on the polished assembly and look at the results:
+
+```bash
 busco -i results/bsubtilis/polished/bsubtilis_racon.fasta -m genome \
    -l bacillales_odb10 -o results/bsubtilis/busco_polished
 ```
 
-`BUSCO` will produce a long log accompanied by multiple files, with a quantitative assessment of the completeness of the assembly. The main focus is on gene content, divided in multiple categories based onthe gene count. Further information can be found in their [manual](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results). Lets look at the results of the polished and raw assemblies:
-
 1. Raw assembly:
+
         --------------------------------------------------
         |Results from dataset bacillales_odb10            |
         --------------------------------------------------
