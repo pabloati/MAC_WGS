@@ -6,6 +6,7 @@ This tutorial will guide you through the process of filtering, assembling, circu
 - **NanoFilt** to filter low-quality and short reads.
 - **Flye** for the _de novo_ assembly of long reads.
 - **Racon** to polish the  initial assembly.
+- **BUSCO** to assess the quality of the assembly.
 - **DNAapler** to reorient the circularized assembly.
 - **Prokka** to annotate the assembled genome.
 - **Unicycler** allows to do a hybrid assembly based on short accurate reads.
