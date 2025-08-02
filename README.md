@@ -50,19 +50,11 @@ mamba env create -f course.yaml
 Unicycler and Racon are installed using the commands in their wikis. For their isntallation, I would recommend creating a new directory called programs, so they are more accessible and our main environment does not get full of unnecesary files.
 
 ```bash
-mkdir scripts/programs
-cd scripts/programs
 # Install Unicycler
-git clone https://github.com/rrwick/Unicycler.git
-cd Unicycler
-python3 setup.py install # If it fails, run this command with sudo
-cd ..
+sudo apt install Uni
 
 # Racon install
-git clone https://github.com/lbcb-sci/racon && cd racon && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release .. && make
-sudo make install
-cd ../../..
+sudo apt install racon
 ```
 
 The final tool that you should install is called [Bandage](https://github.com/rrwick/Bandage), which is a GUI programs that allows the interaction and visualization of the graphs made by most *de novo* assemblers. The easiest way to install and use, in my opinion, would be to install it in your normal machine (Windows or Mac) and visuallize the files directly from there. Do not worry, because these files are not big, so you memory won't magically disappear.
