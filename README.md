@@ -51,7 +51,7 @@ Unicycler and Racon are installed using the commands in their wikis. For their i
 
 ```bash
 # Install Unicycler
-sudo apt install Uni
+sudo apt install unicycler
 
 # Racon install
 sudo apt install racon
