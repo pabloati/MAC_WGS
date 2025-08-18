@@ -177,7 +177,7 @@ busco -i results/bsubtilis/assembly/assembly.fasta -m genome \
 To do the mapping we will use `minimap2`:
 
 ```bash
-minimap2 -x map-ont results/bsubtilis/circularized.fasta \
+minimap2 -x map-ont results/bsubtilis/assembly/assembly.fasta \
     results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     -t 8 > results/bsubtilis/assembly/bsubtilis_mapped.paf
 ```
@@ -192,7 +192,7 @@ racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
 ```
 
-***Disclaimer:*** Some recent papers have found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
+***Disclaimer:*** As shown in this (paper)[https://www.microbiologyresearch.org/content/journal/mgen/10.1099/mgen.0.001316#tab2] found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
 
 With that in mind, lets run busco on the polished assembly and look at the results:
 
