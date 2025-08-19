@@ -40,7 +40,7 @@ mkdir -p results/bsubtilis
 mkdir -p results/ecoli
 ```
 
-Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use mamba, which is a version of conda more powerful when multiple software has too be installed. 
+Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use (mamba)[https://github.com/mamba-org/mamba], which is a version of conda more powerful when multiple software has too be installed. Once you have installed mamba, you might need to run `mamba init` and restart your terminal.
 
 ```bash
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/course.yaml
