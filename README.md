@@ -40,7 +40,7 @@ mkdir -p results/bsubtilis
 mkdir -p results/ecoli
 ```
 
-Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use (mamba)[https://github.com/mamba-org/mamba], which is a version of conda more powerful when multiple software has too be installed. Once you have installed mamba, you might need to run `mamba init` and restart your terminal.
+Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use [mamba](https://github.com/mamba-org/mamba), which is a version of conda more powerful when multiple software has too be installed. Once you have installed mamba, you might need to run `mamba init` and restart your terminal.
 
 ```bash
 wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/course.yaml
@@ -192,7 +192,7 @@ racon results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
     results/bsubtilis/assembly/assembly.fasta  -t 8 > results/bsubtilis/polished/bsubtilis_racon.fasta
 ```
 
-***Disclaimer:*** As shown in this (paper)[https://www.microbiologyresearch.org/content/journal/mgen/10.1099/mgen.0.001316#tab2] found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
+***Disclaimer:*** As shown in this [paper](https://www.microbiologyresearch.org/content/journal/mgen/10.1099/mgen.0.001316#tab2) found that with the newest upgrades to ONT sequencing, the read quality is good enought that the assemblies might not need a polishing step, and it would even hinder the results. However, nothing is confirmed, and it is always a good practice to check your assembly before and after polishing if you have a good reference. In our case, by `Racon` output, we can see that a small fraction of the genome is corrected, which is an improvement.
 
 With that in mind, lets run busco on the polished assembly and look at the results:
 
