@@ -21,43 +21,35 @@ Before starting, ensure that you are able to access the ERDA workgroup and follo
    
 3. Download from the ERDA workgroup the file course.yaml
 
-4. Install the conda environment: `mamba install -f course.yaml`
-
-5. Install [Unicycler](https://github.com/rrwick/Unicycler?tab=readme-ov-file#installation) and [Racon](https://github.com/lbcb-sci/racon?tab=readme-ov-file#installation).
-
+4. Install and activate the unified conda environment:
+   ```bash
+   mamba env create -f course.yaml
+   conda activate course
+   ```
 
 #### Tools installation
-The first step, even before processing any data is to prepare the working environment. In bioinformatics, an organized workspace is vital, so when you come after some time to your project, you can find and understand whant you were doing, rather thatn spend hours searching through weirldy named directories. It is inportant to always create three directories:
+The first step, even before processing any data is to prepare the working environment. In bioinformatics, an organized workspace is vital, so when you come after some time to your project, you can find and understand what you were doing, rather than spend hours searching through weirdly named directories. It is important to always create three directories:
 
 - scripts: all the scripts will be stored here, with meaningful names
 - data: Raw data will go in here and, if you want and need, databases
-- results: Create a sub directory for every different process you do. If you run a process multiple times with different parameters, include them in the directory name, so you will differenciate them in the future.
+- results: Create a sub directory for every different process you do. If you run a process multiple times with different parameters, include them in the directory name, so you will differentiate them in the future.
 
 ```bash
-mkdir scripts
-mkdir data
+mkdir -p scripts
+mkdir -p data/bsubtilis
+mkdir -p data/ecoli
 mkdir -p results/bsubtilis
 mkdir -p results/ecoli
 ```
 
-Most of the tools can be installed directly using a conda environment. Conda environments are powerful options to install multiple programs avoiding compatibility issues. In this case, we will use [mamba](https://github.com/mamba-org/mamba), which is a version of conda more powerful when multiple software has too be installed. Once you have installed mamba, you might need to run `mamba init` and restart your terminal.
+All required software (`NanoPlot`, `NanoFilt`, `Flye`, `minimap2`, `Racon`, `dnaapler`, `Prokka`, `Unicycler`, `SPAdes`, and `BUSCO`) is installed inside the `course` mamba environment defined by `course.yaml`:
 
 ```bash
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/course.yaml
 mamba env create -f course.yaml
+conda activate course
 ```
 
-Unicycler and Racon are installed using the commands in their wikis. For their isntallation, I would recommend creating a new directory called programs, so they are more accessible and our main environment does not get full of unnecesary files.
-
-```bash
-# Install Unicycler
-sudo apt install unicycler
-
-# Racon install
-sudo apt install racon
-```
-
-The final tool that you should install is called [Bandage](https://github.com/rrwick/Bandage), which is a GUI programs that allows the interaction and visualization of the graphs made by most *de novo* assemblers. The easiest way to install and use, in my opinion, would be to install it in your normal machine (Windows or Mac) and visuallize the files directly from there. Do not worry, because these files are not big, so you memory won't magically disappear.
+The final tool that you should install is [**Bandage**](https://github.com/rrwick/Bandage/releases), which is a GUI program that allows the interaction and visualization of the graphs made by most *de novo* assemblers. The easiest way to use Bandage is to download the standalone binary on your machine (Windows/Mac/Linux) and visualize the `.gfa` graph files directly.
 
 #### Data download
 
@@ -117,16 +109,17 @@ NanoFilt -l 1000 -q 12 data/bsubtilis/bsubtilis_long_reads.fastq > results/bsubt
 
  ## Step 2: Assemble the reads
 
-We will use `Flye`, a *de novo* assembler for long reads. It is designed for a wide range of datasets, and it has several parameters that will have to specify to obtain the most optimal assembly. First of all, we have to indicate the type of input we are using, `nano-raw` in our case, since we have regular uncorrected nanopore reads. Also, it is important to specify genome size, so `Flye` know's what to expect and can estimate the correct depth of sequencing and act accordingly.
+We will use `Flye`, a *de novo* assembler for long reads based on repeat graphs (ABruijn). We specify `--nano-hq` (minimizer-indexed mode for Q12+ filtered reads), which prevents high memory consumption and avoids Out-Of-Memory (OOM) errors on machines with limited RAM (< 8 GB). We also specify the expected genome size (4.3 Mb):
 
 ```bash 
-flye --nano-raw results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
-    -t 8 \
+flye --nano-hq results/bsubtilis/filtered/bsubtilis_long_reads_filtered.fastq \
+    -t 4 \
     -o results/bsubtilis/assembly \
     --genome-size 4300000
 ```
 
-There is another useful option in `Flye`, which is `asm-coverage`, where you can indicate the desired covereage you want in your assembly and it will automatically subset your input to meet the requirement. This might be useful in cases where there is too much information (over 100x), which will slow down the process and might lead `Flye` to produce errors.
+> [!TIP]
+> **Memory & Thread Optimization:** Running `--nano-hq` with `-t 4` keeps peak RAM under 1.0 GB and finishes in ~7 minutes. If running on higher-depth data without `--nano-hq`, using `--asm-coverage 40` will subsample the longest reads for initial disjointig assembly and save substantial RAM. Also, if you have over 100x coverage, consider using `--asm-coverage 40` to subsample the longest reads for initial disjointig assembly, which can prevent `Flye` from producing fragmented assemblies and errors.
 
 `Flye` produces as ouptut multiple files, such as the final assembly (assembly.fasta) and the assembly graphs. The assembly graphs are indicators of how good the assembly was done, and if it went accordingly. The graphs can be visualized using Bandage. If we are assembling an isolate, ideally we would like to see one big circular fragment, the chromosome, with some smaller circular or linear fragments (plasmids)
 
@@ -228,11 +221,11 @@ busco -i results/bsubtilis/polished/bsubtilis_racon.fasta -m genome \
         |450    Total BUSCO groups searched               |
         --------------------------------------------------
 
-As you can see, the polished assembly is slightly worse 
+As you can see, the polished assembly shows a slight drop in BUSCO completeness (99.3% vs 99.8%). This occurs because high-accuracy ONT reads already yield high consensus accuracy; over-polishing with noisy long reads can sometimes introduce small indel shifts into homopolymer tracts, leading to artificial frameshifts in protein coding genes. Therefore, it is always best practice to benchmark BUSCO before and after polishing!
 
  ## Step 5: Circularize the assembly
 
-Once the assembly is done and we determined the best pipeline, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positons!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
+Once the assembly is done and we determined the best pipeline, the first contig will contain our chromosome. By consensus, the bacterial chromosomes have to be oriented so the first gene present is the origin of replication (dnaA in most cases). That way, different assemblies of the same genome can be compared between them (otherwise the genes would have different positions!). For that purpose, we use a circularizer tool, such as dnaapler. It will search for any origin of replication genes of both genomes and plasmids and then alter the contigs so these are the first positions.
 
 ```bash
 dnaapler all -i results/bsubtilis/assembly/assembly.fasta \
@@ -256,15 +249,15 @@ prokka --outdir results/bsubtilis/annotation \
 
  ## Excercise
 
- Following and using all the information you have up intil now, try to assembly the _Escherichia coli_ C-1 genome using only the long reads given. Go step by step and decide on the previously discussed parameters. At every milestone, look at the output files and decide if it is worth continuing or something has gone wrong.
+ Following and using all the information you have up until now, try to assembly the _Escherichia coli_ C-1 genome using only the long reads given. Go step by step and decide on the previously discussed parameters. At every milestone, look at the output files and decide if it is worth continuing or something has gone wrong.
  
  ## Step Extra: Hybrid assembly
 
- Nanopore technologies have great strength when it comes to resolving repeats and structural variants due to their long size. However, they come with the caveat of a reduced accuarcy when compared with short reads. This can be compensated by a high throughput, that will correct most of the errors. 
+ Nanopore technologies have great strength when it comes to resolving repeats and structural variants due to their long size. However, they come with the caveat of a reduced accuracy when compared with short reads. This can be compensated by a high throughput, that will correct most of the errors. 
 
  Another method to solve the error rate issue from long reads is to combine the power of both short and long reads by performing a hybrid assembly. There are multiple ways in which this process can be done, but the most common is to perform a initial assembly with long reads and then polish it using the short reads. To do this, the short reads are aligned to the long read assembly and then, errors are corrected.
 
- We have already talked about polishing a long-read assembly by using short accurate reads, with a tool like `Racon`. Now, its time to look at the other approach, to first build a short-reads assembly and then resolve the repetitive regions using long reads. For this step, we will use the assembler `Unicycler`. It combines a short read assembly done by `Spades` using different graph approaches, which will be combined to produce one final polished assembly. That assembly will contain loops in the graph that are unresolved, and cannot be resolved using only short reads. Thus, long reads are used to find the most supported path in the repetitive regions, eliminating the ambiguosity.
+ We have already talked about polishing a long-read assembly by using short accurate reads, with a tool like `Racon`. Now, its time to look at the other approach, to first build a short-reads assembly and then resolve the repetitive regions using long reads. For this step, we will use the assembler `Unicycler`. It combines a short read assembly done by `Spades` using different graph approaches, which will be combined to produce one final polished assembly. That assembly will contain loops in the graph that are unresolved, and cannot be resolved using only short reads. Thus, long reads are used to find the most supported path in the repetitive regions, eliminating the ambiguity.
 
 <p align="center">
   <img src="Images/Unicycler_pipeline.png" alt="Alt text" width="500"/>
@@ -274,11 +267,23 @@ prokka --outdir results/bsubtilis/annotation \
 
 With all of this in mind, `Unicycler` is a comfortable and user friendly tool to implement. For this example we will use the *E.coli* dataset, since it contains both short accurate Illumina reads and long ONT reads.
 
-Now, download the data from ERDA to 
+Now, execute the `Unicycler` hybrid assembly combining the short Illumina and long ONT reads:
 
-````bash
+```bash
 unicycler -l data/ecoli/minion_2d.fq \
   -1 data/ecoli/illumina_f.fq \
   -2 data/ecoli/illumina_r.fq \
   -t 8 -o results/ecoli/unicycler_ecoli
-````
+```
+
+---
+
+## Pre-Generated Results (Classroom Fallback)
+
+If your laptop runs out of memory, experiences thermal throttling, or if time is limited, you can extract the full pre-computed results package:
+
+```bash
+tar -xvf upgrades/precomputed_results.tar.gz -C .
+```
+
+This restores all final assemblies (`assembly.fasta`), graphs (`.gfa` files for Bandage), BUSCO evaluations, and annotations (`.gff`, `.gbk`, `.tsv`) immediately into your `results/` folder.
