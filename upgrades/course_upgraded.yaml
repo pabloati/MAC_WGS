@@ -1,0 +1,42 @@
+name: mac_wgs
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # Quality Control & Preprocessing
+  - nanoplot >=1.42.0
+  - nanofilt >=2.8.0
+  - filtlong >=0.2.1
+
+  # K-mer Profiling & Genome Estimation
+  - kmc >=3.2.1
+  - genomescope2 >=2.0
+
+  # De Novo Assemblers
+  - flye >=2.9.3
+  - raven-assembler >=1.8.3
+  - unicycler >=0.5.0
+  - spades >=3.15.5
+
+  # Assembly Polishing & Alignment
+  - minimap2 >=2.28
+  - racon >=1.5.0
+  - samtools >=1.19
+
+  # Circularization & Orientation
+  - dnaapler >=0.7.0
+
+  # Assembly Quality Assessment & Evaluation
+  - quast >=5.2.0
+  - busco >=5.7.0
+  - merqury >=1.3
+  - meryl >=1.4.1
+
+  # Annotation & Downstream Analytics
+  - prokka >=1.14.6
+  - mob_suite >=3.1.9
+
+  # Core Python & System Utilities
+  - python >=3.10
+  - pandas >=2.0
+  - matplotlib >=3.7

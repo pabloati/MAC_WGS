@@ -1,6 +1,9 @@
 data/
-upgrades/
+upgrades/*.md
+upgrades/Assembly_an_annotation_updgraded.pptx
+upgrades/Graph_construction_summary.pptx
 results/
 Images/
 busco_downloads/
 scripts/
+mac_wgs_data.tar.gz

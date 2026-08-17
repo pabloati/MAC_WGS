@@ -1,3 +1,5 @@
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pabloati/MAC_WGS/blob/collab_edition/upgrades/MAC_WGS_colab.ipynb)
+
 # Nanopore Data Assembly Tutorial
 
 This tutorial will guide you through the process of filtering, assembling, circularizing, and annotating nanopore sequencing data using various bioinformatics tools. The tools used in this tutorial are:
