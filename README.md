@@ -1,5 +1,4 @@
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pabloati/MAC_WGS/blob/colab_version/upgrades/MAC_WGS_colab. 
-  ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pabloati/MAC_WGS/blob/collab_edition/upgrades/MAC_WGS_colab.ipynb)
 
 # Nanopore Data Assembly Tutorial
 
