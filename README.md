@@ -25,7 +25,7 @@ Before starting, ensure that you are able to access the ERDA workgroup and follo
 
 4. Install and activate the unified conda environment:
    ```bash
-   mamba env create -f course.yaml
+   conda env create -f course.yaml
    conda activate course
    ```
 
@@ -47,7 +47,7 @@ mkdir -p results/ecoli
 All required software (`NanoPlot`, `NanoFilt`, `Flye`, `minimap2`, `Racon`, `dnaapler`, `Prokka`, `Unicycler`, `SPAdes`, and `BUSCO`) is installed inside the `course` mamba environment defined by `course.yaml`:
 
 ```bash
-mamba env create -f course.yaml
+conda env create -f course.yaml
 conda activate course
 ```
 
@@ -55,16 +55,17 @@ The final tool that you should install is [**Bandage**](https://github.com/rrwic
 
 #### Data download
 
-Now, with the main directories created and the tools installed, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial:
-
-```bash
-mkdir data/bsubtilis
-cd data/bsubtilis
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/bsubtilis/bsubtilis_long_reads.fastq
-cd ../..
-```
+Now, with the main directories created and the tools installed, lets download the data. It has all been placed on an ERDA workgroup, as mentioned above, with the intermediate files, in case any step fails to work. To begin with, download the *Bacillus subtitlis* raw long reads, which will be used for the first part of the tutorial.
 
 Also, lets download from ERDA the *Echerichia coli* sequencig data. It constists of three files, one with the long ONT reads, and two with the short accurate Illumina reads. They are split in two files since it comes from a Paired End sequencing approach, with the foward and reverse reads.
+
+```bash
+wget -q --show-progress https://github.com/pabloati/MAC_WGS/releases/download/v1.0-data/mac_wgs_data.tar.gz
+# 2. Extract archive if downloaded
+tar -xzf mac_wgs_data.tar.gz
+```
+
+
 
 ```bash
 mkdir data/ecoli
