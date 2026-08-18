@@ -64,19 +64,6 @@ wget -q --show-progress https://github.com/pabloati/MAC_WGS/releases/download/v1
 # 2. Extract archive if downloaded
 tar -xzf mac_wgs_data.tar.gz
 ```
-
-
-
-```bash
-mkdir data/ecoli
-cd data/ecoli
-
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_f.fq
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/illumina_r.fq
-wget https://sid.erda.dk/share_redirect/ePr2eWTdSX/data/ecoli/minion_2d.fq
-
-cd ../..
-```
 Moreover, the data that we will use in this tutorial is publicly available in [NCBI](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR29816488&display=metadata) and in [Zenodo](https://zenodo.org/records/940733),
 
 # Long reads only assembly and annotation
