@@ -15,20 +15,6 @@ This tutorial will guide you through the process of filtering, assembling, circu
 
 ## Prerequisites
 
-Before starting, ensure that you are able to access the ERDA workgroup and follow the next steps to install all the tools that we will use:
-
-1. Access ERDA workgroup [link](https://sid.erda.dk/cgi-sid/ls.py?share_id=ePr2eWTdSX).
-
-2. Download from the ERDA workgroup the raw *Bacillus subtilis* and *Echerichia coli* C-1 sequencing data.
-   
-3. Download from the ERDA workgroup the file course.yaml
-
-4. Install and activate the unified conda environment:
-   ```bash
-   conda env create -f course.yaml
-   conda activate course
-   ```
-
 #### Tools installation
 The first step, even before processing any data is to prepare the working environment. In bioinformatics, an organized workspace is vital, so when you come after some time to your project, you can find and understand what you were doing, rather than spend hours searching through weirdly named directories. It is important to always create three directories:
 
